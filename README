@@ -1,0 +1,50 @@
+                                  
+                              Fourier Transform Example in Ruby
+
+This is a simple tool for calculating and plotting (in ASCII) the frequency domain of a 
+generated signal. The implementation of the Fourier Transform written in Ruby and should
+be clear and consise enough for anyone to understand. Included are two algorithms, the 
+Discrete Fourier Transform (DFT) and the Fast Fourier Transform (FFT).
+
+The speed of the algorithms as tested on my Macbook Pro:
+
+DFT: O(N^2)
+
+  N = 1024:  4.55 seconds
+      2048: 16.71
+
+The DFT gets very slow and is only included as an example of the implementation and
+testing that the FFT results match.
+  
+
+FFT: O(N log N)
+
+  N = 1024:  0.03 seconds
+      2048:  0.06 
+      4096:  0.13
+      .. 
+     16384: 0.64 
+
+The FFT can almost run at realtime in ruby against a 44kHz signal.
+
+Usage:
+
+  ruby fourier_transform.rb -n buffersize -f frequency [-r samplerate] [--sine|--square] [--plot] [--benchmark]
+
+  -n, --buffersize N               Specify buffer size of N samples
+  -r, --samplerate SAMPLERATE      Specify the sample rate of the generated signal
+  -f, --frequency FREQUENCY        Specify the frequency of the generated signal in Hz
+      --sine                       Generate a sine wave (default)
+      --square                     Generate a square wave
+      --plot                       Plot a graph of the Fourier Transform
+      --benchmark                  Benchmark DFT vs FFT
+  -h, --help                       Show this message
+
+
+
+
+@corban                                                    weare.buildingsky.net
+________________________________________________________________________________
+
+       Copyright (c) 2009 Corban Brook, released under the MIT license
+                                                                                  
