@@ -23,6 +23,12 @@ option_parser = OptionParser.new do |opts|
   opts.on("--square", "Generate a square wave") do |wave|
     options[:waveform] = :square
   end
+  opts.on("--saw", "Generate a saw wave") do |wave|
+    options[:waveform] = :saw
+  end
+  opts.on("--triangle", "Generate a triangle wave") do |wave|
+    options[:waveform] = :triangle
+  end
   opts.on("--plot", "Plot a graph of the Fourier Transform") do |plot|
     options[:plot] = plot
   end
@@ -150,7 +156,7 @@ class FourierTransform
     index_to_frequency(index)
   end
   
-  def plot(rows = 10, cols = 80)
+  def plot(rows = 20, cols = 80)
     return if @spectrum.empty?
     puts "[FFT] #{@samplerate}Hz samplerate / #{@buffersize} sample buffersize"
     max = @spectrum.max
@@ -210,12 +216,16 @@ end
 # generate a signal to pass to the FourierTransform
 signal = Array.new
 (0...options[:buffersize]).each do |i|
-  step = i * (options[:frequency] / options[:samplerate]) % 1.0
+  step = i * (options[:frequency] / options[:samplerate].to_f) % 1.0
   case options[:waveform]
     when :sine # no harmonics
       signal[i] = Math.sin(step * 2 * Math::PI) 
     when :square # lots of harmonics
       signal[i] = step < 0.5 ? 1.0 : -1.0
+    when :triangle
+      signal[i] = 1 - 4 * (step.round - step).abs
+    when :saw
+      signal[i] = 2 * (step - step.round)
   end
 end
 
