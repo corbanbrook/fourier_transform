@@ -6,6 +6,34 @@ generated signal. The implementation of the Fourier Transform written in Ruby an
 be clear and consise enough for anyone to understand. Included are two algorithms, the 
 Discrete Fourier Transform (DFT) and the Fast Fourier Transform (FFT).
 
+[FFT] Sample rate: 44.1kHz / Buffer size: 128 samples / Input: generated 880.0Hz square wave
+      Found fundamental peak frequency of 689.06Hz +/- 172.27 (off by 190.94Hz)
+
+        .                                                             - 0.9
+        ..                                                            
+        ..                                                            - 0.8
+        ..                                                            
+        ..                                                            - 0.7
+        ..                                                            
+        ..                                                            - 0.6
+        ..                                                            
+        ..                                                            - 0.5
+        ..                                                            
+      ....    .                                                       - 0.4
+      ....    .                                                       
+      ....    .                                                       - 0.3
+      ....    .                                                       
+      ....    .                                                       - 0.3
+      ....   ..    .    .    .                                        
+      ....   ..    .    .    .                                        - 0.2
+      .....  ...  ..    .    .    .    .    .    .    ..    .    .    
+      .....  ...  ..    .    .    .    .    .    .    ..    .    .    - 0.1
+      ................................................................
+      ----------------------------------------------------------------- 0.0
+      ^ *       ^         ^         ^         ^         ^         ^    
+      0kHz     34kHz     69kHz     103kHz    138kHz    172kHz    207kHz     
+
+
 The speed of the algorithms as tested on my Macbook Pro:
 
 DFT: O(N^2)
@@ -27,17 +55,15 @@ FFT: O(N log N)
 
 The FFT can almost run at realtime in ruby against a 44kHz signal.
 
-Usage:
+Ruby 1.9 is 30-50% faster then Ruby 1.8.7 in my tests with DFT and FFT.
 
-Usage: ruby fourier_transform.rb -n buffersize -f frequency [-r samplerate] [--sine|--square|--saw|--triangle] [--plot] [--benchmark]
+Usage: ruby fourier_transform.rb -n buffersize -f frequency [-r samplerate] [-w sine|triangle|square|saw] [--plot] [--benchmark]
 
     -n, --buffersize N               Specify buffer size of N samples
-    -r, --samplerate SAMPLERATE      Specify the sample rate of the generated signal
     -f, --frequency FREQUENCY        Specify the frequency of the generated signal in Hz
-        --sine                       Generate a sine wave (default)
-        --square                     Generate a square wave
-        --saw                        Generate a saw wave
-        --triangle                   Generate a triangle wave
+    -r, --samplerate SAMPLERATE      Specify the sample rate of the generated signal
+    -w, --waveform WAVEFORM          Specify the shape of the waveform. sine (default), triangle, square, or saw
+        --dft                        Perform a Discrete Fourier Transform (slower)
         --plot                       Plot a graph of the Fourier Transform
         --benchmark                  Benchmark DFT vs FFT
     -h, --help                       Show this message

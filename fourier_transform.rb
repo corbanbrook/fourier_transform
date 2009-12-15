@@ -5,29 +5,24 @@ options = {}
 options[:samplerate] = 44100.0
 options[:waveform] = :sine
 options[:benchmark] = false
+options[:transform] = :fft
 
 option_parser = OptionParser.new do |opts|
-  opts.banner = "Usage: ruby fourier_transform.rb -n buffersize -f frequency [-r samplerate] [--sine|--square] [--plot] [--benchmark]"
+  opts.banner = "Usage: ruby fourier_transform.rb -n buffersize -f frequency [-r samplerate] [-w sine|triangle|square|saw] [--plot] [--benchmark]"
   opts.on("-n", "--buffersize N", Integer, "Specify buffer size of N samples") do |n|
     options[:buffersize] = n
-  end
-  opts.on("-r", "--samplerate SAMPLERATE", Float, "Specify the sample rate of the generated signal") do |r|
-    options[:samplerate] = r
   end
   opts.on("-f", "--frequency FREQUENCY", "Specify the frequency of the generated signal in Hz") do |f|
     options[:frequency] = f.to_f
   end
-  opts.on("--sine", "Generate a sine wave (default)") do |wave|
-    options[:waveform] = :sine
+  opts.on("-r", "--samplerate SAMPLERATE", Float, "Specify the sample rate of the generated signal") do |r|
+    options[:samplerate] = r
   end
-  opts.on("--square", "Generate a square wave") do |wave|
-    options[:waveform] = :square
+  opts.on("-w", "--waveform WAVEFORM", "Specify the shape of the waveform. sine (default), triangle, square, or saw") do |wave|
+    options[:waveform] = wave.to_sym if ['sine', 'triangle', 'square', 'saw'].include?(wave)
   end
-  opts.on("--saw", "Generate a saw wave") do |wave|
-    options[:waveform] = :saw
-  end
-  opts.on("--triangle", "Generate a triangle wave") do |wave|
-    options[:waveform] = :triangle
+  opts.on("--dft", "Perform a Discrete Fourier Transform (slower)") do
+    options[:transform] = :dft
   end
   opts.on("--plot", "Plot a graph of the Fourier Transform") do |plot|
     options[:plot] = plot
@@ -49,7 +44,7 @@ rescue
 end
 
 class Float
-  def round_to(n=0)
+  def round_to n = 0
     (self * 10**n).round / 10.0**n
   end
 end
@@ -91,6 +86,21 @@ class FourierTransform
       @sin_lookup[i] = Math.sin(- Math::PI / i);
       @cos_lookup[i] = Math.cos(- Math::PI / i);
     end
+  end
+  
+  def dft(buffer)
+    real = Array.new(buffer.length/2, 0)
+    imag = Array.new(buffer.length/2, 0)
+    
+    (0...buffer.length/2).each do |k|
+      (0...buffer.length).each do |n|
+        real[k] += buffer[n] * Math.cos(2 * Math::PI * k * n / buffer.length)
+        imag[k] += buffer[n] * -Math.sin(2 * Math::PI * k * n / buffer.length)
+      end
+      @spectrum[k] = 2 * Math.sqrt(real[k] ** 2 + imag[k] ** 2) / buffer.length
+    end
+    
+    @spectrum
   end
 
   def fft(buffer)
@@ -135,7 +145,6 @@ class FourierTransform
       halfsize = halfsize << 1
     end
 
-    @spectrum = Array.new
     (0...buffer.length/2).each do |i|
       @spectrum[i] = 2 * Math.sqrt(real[i] ** 2 + imag[i] ** 2) / buffer.length
     end
@@ -158,7 +167,7 @@ class FourierTransform
   
   def plot(rows = 20, cols = 80)
     return if @spectrum.empty?
-    puts "[FFT] #{@samplerate}Hz samplerate / #{@buffersize} sample buffersize"
+
     max = @spectrum.max
     min = @spectrum.min
     y = (max - min) / rows.to_f
@@ -230,22 +239,23 @@ signal = Array.new
 end
 
 fourier = FourierTransform.new(options[:buffersize], options[:samplerate])
-fourier.fft(signal)
-puts "[FFT] Sample rate: #{fourier.samplerate/1000}kHz / Buffer size: #{fourier.buffersize} samples / Input: generated #{options[:frequency]}Hz #{options[:waveform].to_s} wave\n\n"
-puts "      Found fundamental peak frequency of #{fourier.peak_frequency.round_to(2)}Hz +/- #{(fourier.bandwidth/2.0).round_to(2)} (off by #{(options[:frequency] - fourier.peak_frequency).round_to(2).abs}Hz)"
-
 
 if options[:benchmark]
   Benchmark.bm(10) do |bench|
     bench.report('DFT') do
-      #fourier.dft(signal)
+      fourier.dft(signal)
     end
     bench.report('FFT') do
       fourier.fft(signal)
     end
   end
-end
+else
+  fourier.send(options[:transform], signal) # runs either fft or dft transform
 
-if options[:plot]
-  fourier.plot
+  puts "[#{options[:transform].to_s.upcase}] Sample rate: #{fourier.samplerate/1000}kHz / Buffer size: #{fourier.buffersize} samples / Input: generated #{options[:frequency]}Hz #{options[:waveform].to_s} wave\n\n"
+  puts "      Found fundamental peak frequency of #{fourier.peak_frequency.round_to(2)}Hz +/- #{(fourier.bandwidth/2.0).round_to(2)} (off by #{(options[:frequency] - fourier.peak_frequency).round_to(2).abs}Hz)\n\n"  
+
+  if options[:plot]
+    fourier.plot
+  end
 end
