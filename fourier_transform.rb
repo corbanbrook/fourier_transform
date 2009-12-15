@@ -207,7 +207,7 @@ class FourierTransform
     line = ""
     (0..@spectrum.length).each do |col|
       if col % 10 == 0
-        label = "#{(col * @bandwidth / 100).round}kHz"
+        label = "#{(col * @bandwidth / 1000).round}kHz"
         if col == 0
           line << label
         else
